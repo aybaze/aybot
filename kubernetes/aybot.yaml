@@ -1,0 +1,60 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: aybot
+  name: aybot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aybot
+  template:
+    metadata:
+      labels:
+        app: aybot
+    spec:
+      containers:
+      - env:
+        - name: DISCORD_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: aybot-secret
+              key: discord-api-token
+        image: oxisto/aybot
+        imagePullPolicy: Always
+        name: aybot
+      imagePullSecrets:
+      - name: registry-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aybot
+spec:
+  ports:
+  - port: 4300
+    protocol: TCP
+    targetPort: 4300
+  selector:
+    app: aybot
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/tls-acme: "true"
+  name: aybot
+spec:
+  rules:
+  - host: bot.aybaze.com
+    http:
+      paths:
+      - backend:
+          serviceName: aybot
+          servicePort: 4300
+        path: /
+  tls:
+  - hosts:
+    - bot.aybaze.com
+    secretName: aybot-tls
