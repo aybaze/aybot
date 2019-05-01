@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	DiscordApiToken = "discord-api-token"
+	// DiscordAPIToken is the flag for the Discord API token
+	DiscordAPIToken = "discord-api-token"
 )
 
 var botCmd = &cobra.Command{
@@ -27,8 +28,8 @@ var botCmd = &cobra.Command{
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	botCmd.Flags().StringP(DiscordApiToken, "t", "", "The token for Discord integration")
-	viper.BindPFlag(DiscordApiToken, botCmd.Flags().Lookup(DiscordApiToken))
+	botCmd.Flags().StringP(DiscordAPIToken, "t", "", "The token for Discord integration")
+	viper.BindPFlag(DiscordAPIToken, botCmd.Flags().Lookup(DiscordAPIToken))
 }
 
 func initConfig() {
@@ -44,7 +45,7 @@ var homeChannel string
 var presences = make(map[string]string)
 
 func doCmd(cmd *cobra.Command, args []string) {
-	token := viper.GetString(DiscordApiToken)
+	token := viper.GetString(DiscordAPIToken)
 
 	if token == "" {
 		log.Println("No Discord API token provided.")
