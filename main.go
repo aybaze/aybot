@@ -204,7 +204,7 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 
 	for _, channel := range event.Guild.Channels {
 		if channel.Name == "general" {
-			_, _ = s.ChannelMessageSend(channel.ID, "Aybot is ready to serve.")
+			//_, _ = s.ChannelMessageSend(channel.ID, "Aybot is ready to serve.")
 			homeChannel = channel.ID
 			return
 		}

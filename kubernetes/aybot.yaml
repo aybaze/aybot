@@ -21,11 +21,9 @@ spec:
             secretKeyRef:
               name: aybot-secret
               key: discord-api-token
-        image: oxisto/aybot
+        image: aybaze/aybot
         imagePullPolicy: Always
         name: aybot
-      imagePullSecrets:
-      - name: registry-secret
 ---
 apiVersion: v1
 kind: Service
