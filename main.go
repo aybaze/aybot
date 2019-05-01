@@ -185,13 +185,19 @@ func renderVoiceStateText(user *discordgo.User, leaving bool, voiceState *discor
 		embed = &discordgo.MessageEmbed{
 			Description: s,
 			Color:       0x96281b,
-			Title:       getRandomTitle(voiceTitlesLeaving),
+			Author: &discordgo.MessageEmbedAuthor{
+				Name:    getRandomTitle(voiceTitlesLeaving),
+				IconURL: user.AvatarURL("128"),
+			},
 		}
 	} else {
 		embed = &discordgo.MessageEmbed{
 			Description: s,
 			Color:       0x1e824c,
-			Title:       getRandomTitle(voiceTitlesJoining),
+			Author: &discordgo.MessageEmbedAuthor{
+				Name:    getRandomTitle(voiceTitlesJoining),
+				IconURL: user.AvatarURL("128"),
+			},
 		}
 	}
 
