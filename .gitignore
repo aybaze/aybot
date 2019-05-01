@@ -5,6 +5,8 @@
 *.so
 *.dylib
 aybot
+debug
+.env
 
 # Test binary, build with `go test -c`
 *.test

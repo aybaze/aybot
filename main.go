@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
@@ -40,9 +42,16 @@ func initConfig() {
 var token string
 var buffer = make([][]byte, 0)
 
-var homeChannel string
+var homeChannels = make(map[string]string)
 
 var presences = make(map[string]string)
+var voiceStates = make(map[string]discordgo.VoiceState)
+var channels = make(map[string]discordgo.Channel)
+
+var lastVoiceMessage = make(map[string]*discordgo.Message)
+
+var voiceTitlesJoining = []string{"Let's talk!", "Did you know?", "Who needs TeamSpeak?", "Someone.. talk to him!"}
+var voiceTitlesLeaving = []string{"Bye, bye!", "Uhm... gone already?"}
 
 func doCmd(cmd *cobra.Command, args []string) {
 	token := viper.GetString(DiscordAPIToken)
@@ -105,33 +114,88 @@ func voiceStateUpdate(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
 		return
 	}
 
-	user, _ := s.GuildMember(m.GuildID, m.UserID)
+	// fetch some information about the user
+	member, _ := s.GuildMember(m.GuildID, m.UserID)
 
-	if m.ChannelID == "" {
-		// user left
-		if homeChannel != "" {
-			data := &discordgo.MessageEmbed{
-				Description: fmt.Sprintf("... left voice channel."),
-				Color:       0x96281b,
-				//Timestamp: time.Now().Format(time.RFC3339),
-				Author: &discordgo.MessageEmbedAuthor{Name: user.User.Username, IconURL: user.User.AvatarURL("128")},
-			}
+	log.Printf("Voice state update: %+v", m.VoiceState)
 
-			_, _ = s.ChannelMessageSendEmbed(homeChannel, data)
+	// fetch old voice state for user
+	oldState := voiceStates[m.UserID]
+
+	// somehow, the channel has been changed
+	if oldState.ChannelID != m.ChannelID {
+		if m.ChannelID == "" {
+			// user left
+			log.Printf("%s left voice channel **%s**.", member.User.Username, channels[oldState.ChannelID].Name)
+
+			embed, _ := renderVoiceStateText(member.User, true, &oldState)
+
+			lastVoiceMessage[m.UserID], _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], embed)
+		} else {
+			// user joined
+			log.Printf("%s joined voice channel **%s**.", member.User.Username, channels[m.ChannelID].Name)
+
+			embed, _ := renderVoiceStateText(member.User, false, m.VoiceState)
+
+			lastVoiceMessage[m.UserID], _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], embed)
 		}
 	} else {
-		// user joined
-		if homeChannel != "" {
-			data := &discordgo.MessageEmbed{
-				Description: fmt.Sprintf("... joined voice channel."),
-				Color:       0x1e824c,
-				//Timestamp: time.Now().Format(time.RFC3339),
-				Author: &discordgo.MessageEmbedAuthor{Name: user.User.Username, IconURL: user.User.AvatarURL("128")},
-			}
+		// some kind of other event, for example, mute/unmute
+		log.Printf("Muting settings of user %s changed.", member.User.Username)
 
-			_, _ = s.ChannelMessageSendEmbed(homeChannel, data)
+		if lastVoiceMessage[m.UserID] != nil {
+			embed, _ := renderVoiceStateText(member.User, false, m.VoiceState)
+
+			s.ChannelMessageEditEmbed(homeChannels[m.GuildID], lastVoiceMessage[m.UserID].ID, embed)
 		}
 	}
+
+	// update state
+	voiceStates[m.UserID] = *m.VoiceState
+}
+
+func getRandomTitle(titles []string) string {
+	return titles[rand.Intn(len(titles))]
+}
+
+func renderVoiceStateText(user *discordgo.User, leaving bool, voiceState *discordgo.VoiceState) (embed *discordgo.MessageEmbed, err error) {
+	if user == nil || voiceState == nil {
+		return nil, errors.New("please specifiy a valid user and voice state")
+	}
+
+	var s = fmt.Sprintf("<@%s> ", user.ID)
+
+	if leaving {
+		s += "left"
+	} else {
+		s += "joined"
+	}
+
+	s += fmt.Sprintf(" voice channel **<#%s>**", voiceState.ChannelID)
+
+	if !leaving && voiceState != nil && voiceState.SelfDeaf {
+		s += " and is *deaf*."
+	} else if !leaving && voiceState != nil && voiceState.SelfMute {
+		s += " and is *muted*."
+	} else {
+		s += "."
+	}
+
+	if leaving {
+		embed = &discordgo.MessageEmbed{
+			Description: s,
+			Color:       0x96281b,
+			Title:       getRandomTitle(voiceTitlesLeaving),
+		}
+	} else {
+		embed = &discordgo.MessageEmbed{
+			Description: s,
+			Color:       0x1e824c,
+			Title:       getRandomTitle(voiceTitlesJoining),
+		}
+	}
+
+	return embed, nil
 }
 
 func presencesReplace(s *discordgo.Session, m *discordgo.PresencesReplace) {
@@ -160,28 +224,25 @@ func presenceUpdate(s *discordgo.Session, m *discordgo.PresenceUpdate) {
 
 	if newPresence == "" {
 		// user stopped playing
-		if homeChannel != "" {
-			data := &discordgo.MessageEmbed{
-				Description: fmt.Sprintf("... stopped playing **%s**.", oldPresence),
-				Color:       0x96281b,
-				//Timestamp: time.Now().Format(time.RFC3339),
-				Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
-			}
-
-			_, _ = s.ChannelMessageSendEmbed(homeChannel, data)
+		data := &discordgo.MessageEmbed{
+			Description: fmt.Sprintf("... stopped playing **%s**.", oldPresence),
+			Color:       0x96281b,
+			//Timestamp: time.Now().Format(time.RFC3339),
+			Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
 		}
+
+		_, _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], data)
+
 	} else {
 		// user started playing
-		if homeChannel != "" {
-			data := &discordgo.MessageEmbed{
-				Description: fmt.Sprintf("... started playing **%s**.", newPresence),
-				Color:       0x1e824c,
-				//Timestamp: time.Now().Format(time.RFC3339),
-				Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
-			}
-
-			_, _ = s.ChannelMessageSendEmbed(homeChannel, data)
+		data := &discordgo.MessageEmbed{
+			Description: fmt.Sprintf("... started playing **%s**.", newPresence),
+			Color:       0x1e824c,
+			//Timestamp: time.Now().Format(time.RFC3339),
+			Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
 		}
+
+		_, _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], data)
 	}
 
 	// update presence
@@ -195,6 +256,15 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 		return
 	}
 
+	// update voice states
+	for _, voiceState := range event.Guild.VoiceStates {
+		if voiceState != nil {
+			log.Printf("Updating voice state for %s.", voiceState.UserID)
+
+			voiceStates[voiceState.UserID] = *voiceState
+		}
+	}
+
 	// update presences
 	for _, presence := range event.Guild.Presences {
 		if presence.Game != nil {
@@ -202,10 +272,17 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 		}
 	}
 
+	// update channels
+	for _, channel := range event.Guild.Channels {
+		if channel != nil {
+			channels[channel.ID] = *channel
+		}
+	}
+
 	for _, channel := range event.Guild.Channels {
 		if channel.Name == "general" {
 			//_, _ = s.ChannelMessageSend(channel.ID, "Aybot is ready to serve.")
-			homeChannel = channel.ID
+			homeChannels[event.Guild.ID] = channel.ID
 			return
 		}
 	}
