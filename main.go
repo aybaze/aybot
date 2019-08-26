@@ -171,7 +171,7 @@ func renderVoiceStateText(user *discordgo.User, leaving bool, voiceState *discor
 		s += "joined"
 	}
 
-	s += fmt.Sprintf(" voice channel **%s**", channels[voiceState.ChannelID].Name)
+	s += fmt.Sprintf(" voice channel **#%s**", channels[voiceState.ChannelID].Name)
 
 	if !leaving && voiceState != nil && voiceState.SelfDeaf {
 		s += " and is *deaf*."
