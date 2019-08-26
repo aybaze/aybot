@@ -163,7 +163,7 @@ func renderVoiceStateText(user *discordgo.User, leaving bool, voiceState *discor
 		return nil, errors.New("please specifiy a valid user and voice state")
 	}
 
-	var s = fmt.Sprintf("%s ", user.Username)
+	var s = fmt.Sprintf("**%s** ", user.Username)
 
 	if leaving {
 		s += "left"
