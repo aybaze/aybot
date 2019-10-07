@@ -49,6 +49,7 @@ var voiceStates = make(map[string]discordgo.VoiceState)
 var channels = make(map[string]discordgo.Channel)
 
 var lastVoiceMessage = make(map[string]*discordgo.Message)
+var lastGameMessage = make(map[string]*discordgo.Message)
 
 var voiceTitlesJoining = []string{"Let's talk!", "Did you know?", "Who needs TeamSpeak?", "Someone.. talk to him!"}
 var voiceTitlesLeaving = []string{"Bye, bye!", "Uhm... gone already?"}
@@ -238,9 +239,8 @@ func presenceUpdate(s *discordgo.Session, m *discordgo.PresenceUpdate) {
 		}
 
 		_, _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], data)
-
-	} else {
-		// user started playing
+	} else if oldPresence == "" {
+		// user started playing (he did not play before)
 		data := &discordgo.MessageEmbed{
 			Description: fmt.Sprintf("... started playing **%s**.", newPresence),
 			Color:       0x1e824c,
@@ -248,7 +248,17 @@ func presenceUpdate(s *discordgo.Session, m *discordgo.PresenceUpdate) {
 			Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
 		}
 
-		_, _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], data)
+		lastGameMessage[m.User.ID], _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], data)
+	} else {
+		// user just switched gaming
+		data := &discordgo.MessageEmbed{
+			Description: fmt.Sprintf("... is now playing **%s**.", newPresence),
+			Color:       0x1e824c,
+			//Timestamp: time.Now().Format(time.RFC3339),
+			Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
+		}
+
+		s.ChannelMessageEditEmbed(homeChannels[m.GuildID], lastGameMessage[m.User.ID].ID, data)
 	}
 
 	// update presence
