@@ -13,7 +13,7 @@ jobs:
           export DOCKER_HUB_IMAGE=aybaze/aybot
           export TAG=`expr substr $GITHUB_SHA 1 8`
           docker tag aybaze/aybot aybaze/aybot:$TAG
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           docker tag $DOCKER_HUB_IMAGE $DOCKER_HUB_IMAGE:$TAG
           docker push $DOCKER_HUB_IMAGE:$TAG
           docker push $DOCKER_HUB_IMAGE
