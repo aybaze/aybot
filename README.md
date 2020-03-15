@@ -1,4 +1,5 @@
-# Aybot [![Build Status](https://travis-ci.com/aybaze/aybot.svg?branch=master)](https://travis-ci.com/aybaze/aybot)
+# Aybot 
+![build](https://github.com/aybaze/aybot/workflows/build/badge.svg)
 
 The Aybaze community's little helper bot.
 
