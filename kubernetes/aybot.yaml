@@ -15,15 +15,15 @@ spec:
         app: aybot
     spec:
       containers:
-      - env:
-        - name: DISCORD_API_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: aybot-secret
-              key: discord-api-token
-        image: aybaze/aybot
-        imagePullPolicy: Always
-        name: aybot
+        - env:
+            - name: DISCORD_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: aybot-secret
+                  key: discord-api-token
+          image: aybaze/aybot:$TAG
+          imagePullPolicy: Always
+          name: aybot
 ---
 apiVersion: v1
 kind: Service
@@ -31,9 +31,9 @@ metadata:
   name: aybot
 spec:
   ports:
-  - port: 4300
-    protocol: TCP
-    targetPort: 4300
+    - port: 4300
+      protocol: TCP
+      targetPort: 4300
   selector:
     app: aybot
 ---
@@ -45,14 +45,14 @@ metadata:
   name: aybot
 spec:
   rules:
-  - host: bot.aybaze.com
-    http:
-      paths:
-      - backend:
-          serviceName: aybot
-          servicePort: 4300
-        path: /
+    - host: bot.aybaze.com
+      http:
+        paths:
+          - backend:
+              serviceName: aybot
+              servicePort: 4300
+            path: /
   tls:
-  - hosts:
-    - bot.aybaze.com
-    secretName: aybot-tls
+    - hosts:
+        - bot.aybaze.com
+      secretName: aybot-tls

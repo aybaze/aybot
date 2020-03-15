@@ -1,0 +1,27 @@
+name: build
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Build Docker Image
+        run: |
+          docker build -t aybaze/aybot .
+      - name: Push Docker Image
+        run: |
+          export DOCKER_HUB_IMAGE=aybaze/aybot
+          export TAG=`expr substr $GITHUB_SHA 1 8`
+          docker tag aybaze/aybot aybaze/aybot:$TAG
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker tag $DOCKER_HUB_IMAGE $DOCKER_HUB_IMAGE:$TAG
+          docker push $DOCKER_HUB_IMAGE:$TAG
+          docker push $DOCKER_HUB_IMAGE
+        if: github.ref == 'refs/heads/master'
+      - name: Deploy Kubernetes
+        run: |
+          export TAG=`expr substr $GITHUB_SHA 1 8`
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl
+          mkdir -p ~/.kube && echo ${{ secrets.KUBECONFIG_BASE64 }} | base64 -d > ~/.kube/config
+          envsubst < kubernetes/aybot.yaml | kubectl apply -f -
+        if: github.ref == 'refs/heads/master'
