@@ -10,16 +10,16 @@ jobs:
       - uses: actions/checkout@master
       - name: Build Docker Image
         run: |
-          docker build -t aybaze/aybot .
+          docker build -t ghcr.io/aybaze/aybot .
       - name: Push Docker Image
         run: |
-          export DOCKER_HUB_IMAGE=aybaze/aybot
+          export IMAGE=ghcr.io/aybaze/aybot
           export TAG=`expr substr $GITHUB_SHA 1 8`
-          docker tag aybaze/aybot aybaze/aybot:$TAG
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker tag $DOCKER_HUB_IMAGE $DOCKER_HUB_IMAGE:$TAG
-          docker push $DOCKER_HUB_IMAGE:$TAG
-          docker push $DOCKER_HUB_IMAGE
+          docker tag ghcr.io/aybaze/aybot ghcr.io/aybaze/aybot:$TAG
+          echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          docker tag $IMAGE $IMAGE:$TAG
+          docker push $IMAGE:$TAG
+          docker push $IMAGE
         if: github.ref == 'refs/heads/master'
       - name: Deploy Kubernetes
         run: |
