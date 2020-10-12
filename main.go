@@ -241,7 +241,7 @@ func presenceUpdate(s *discordgo.Session, m *discordgo.PresenceUpdate) {
 			Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
 		}
 
-		_, _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], data)
+		_, _ = s.ChannelMessageSendEmbed(notificationsChannels[m.GuildID], data)
 	} else if oldPresence == "" {
 		// user started playing (he did not play before)
 		data := &discordgo.MessageEmbed{
@@ -302,13 +302,11 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 		if channel.Name == "naughtyfications" {
 			// _, _ = s.ChannelMessageSend(channel.ID, "Aybot is ready to serve, biatch!")
 			notificationsChannels[event.Guild.ID] = channel.ID
-			return
 		}
 
 		if channel.Name == "hampel" {
 			// _, _ = s.ChannelMessageSend(channel.ID, "Aybot is ready to serve, biatch!")
 			homeChannels[event.Guild.ID] = channel.ID
-			return
 		}
 	}
 }
