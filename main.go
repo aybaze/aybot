@@ -43,6 +43,7 @@ var token string
 var buffer = make([][]byte, 0)
 
 var homeChannels = make(map[string]string)
+var notificationsChannels = make(map[string]string)
 
 var presences = make(map[string]string)
 var voiceStates = make(map[string]discordgo.VoiceState)
@@ -250,7 +251,7 @@ func presenceUpdate(s *discordgo.Session, m *discordgo.PresenceUpdate) {
 			Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
 		}
 
-		lastGameMessage[m.User.ID], _ = s.ChannelMessageSendEmbed(homeChannels[m.GuildID], data)
+		lastGameMessage[m.User.ID], _ = s.ChannelMessageSendEmbed(notificationsChannels[m.GuildID], data)
 	} else {
 		// user just switched gaming
 		data := &discordgo.MessageEmbed{
@@ -260,7 +261,7 @@ func presenceUpdate(s *discordgo.Session, m *discordgo.PresenceUpdate) {
 			Author: &discordgo.MessageEmbedAuthor{Name: member.User.Username, IconURL: member.User.AvatarURL("128")},
 		}
 
-		s.ChannelMessageEditEmbed(homeChannels[m.GuildID], lastGameMessage[m.User.ID].ID, data)
+		s.ChannelMessageEditEmbed(notificationsChannels[m.GuildID], lastGameMessage[m.User.ID].ID, data)
 	}
 
 	// update presence
@@ -299,6 +300,12 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 
 	for _, channel := range event.Guild.Channels {
 		if channel.Name == "naughtyfications" {
+			// _, _ = s.ChannelMessageSend(channel.ID, "Aybot is ready to serve, biatch!")
+			notificationsChannels[event.Guild.ID] = channel.ID
+			return
+		}
+
+		if channel.Name == "hampel" {
 			// _, _ = s.ChannelMessageSend(channel.ID, "Aybot is ready to serve, biatch!")
 			homeChannels[event.Guild.ID] = channel.ID
 			return
