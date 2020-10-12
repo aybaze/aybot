@@ -77,6 +77,8 @@ func doCmd(cmd *cobra.Command, args []string) {
 
 	session.AddHandler(guildCreate)
 
+	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildPresences | discordgo.IntentsGuildVoiceStates | discordgo.IntentsGuilds)
+
 	// Open the websocket and begin listening.
 	err = session.Open()
 	if err != nil {
