@@ -280,6 +280,8 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 		if voiceState != nil {
 			log.Printf("Updating voice state for %s.", voiceState.UserID)
 
+			voiceState.GuildID = event.Guild.ID
+
 			voiceStates[voiceState.UserID] = *voiceState
 		}
 	}
