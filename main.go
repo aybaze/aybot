@@ -108,7 +108,7 @@ func main() {
 // This function will be called when the bot receives the "ready" event from Discord.
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	// Set the playing status.
-	s.UpdateStatus(0, "ready to serve")
+	s.UpdateGameStatus(0, "ready to serve")
 }
 
 // This function will be called when the voice state changes,
@@ -220,8 +220,8 @@ func presenceUpdate(s *discordgo.Session, m *discordgo.PresenceUpdate) {
 	oldPresence := presences[m.User.ID]
 	newPresence := ""
 
-	if m.Game != nil {
-		newPresence = m.Game.Name
+	if len(m.Activities) > 0 {
+		newPresence = m.Activities[0].Name
 	}
 
 	changed := oldPresence != newPresence
@@ -288,8 +288,8 @@ func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 
 	// update presences
 	for _, presence := range event.Guild.Presences {
-		if presence.Game != nil {
-			presences[presence.User.ID] = presence.Game.Name
+		if len(presence.Activities) > 0 {
+			presences[presence.User.ID] = presence.Activities[0].Name
 		}
 	}
 
