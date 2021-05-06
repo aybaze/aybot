@@ -73,12 +73,16 @@ func doCmd(cmd *cobra.Command, args []string) {
 
 	session.AddHandler(voiceStateUpdate)
 	session.AddHandler(presenceUpdate)
+	session.AddHandler(messageCreated)
 
 	session.AddHandler(ready)
 
 	session.AddHandler(guildCreate)
 
-	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildPresences | discordgo.IntentsGuildVoiceStates | discordgo.IntentsGuilds)
+	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildPresences |
+		discordgo.IntentsGuildVoiceStates |
+		discordgo.IntentsGuilds |
+		discordgo.IntentsGuildMessages)
 
 	// Open the websocket and begin listening.
 	err = session.Open()
@@ -109,6 +113,22 @@ func main() {
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	// Set the playing status.
 	s.UpdateGameStatus(0, "ready to serve")
+}
+
+// This function will be called when a message is created,
+func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
+	/*if m.Author.Username == "ipec" {
+
+	}*/
+
+	log.Printf("Message created: %+v\n", *m.Message)
+
+	if m.Message.Author.Username == "ipec" {
+		log.Printf("Shrug")
+		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "🤷‍♂️"); err != nil {
+			log.Println(err)
+		}
+	}
 }
 
 // This function will be called when the voice state changes,
