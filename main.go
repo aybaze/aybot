@@ -117,14 +117,9 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 
 // This function will be called when a message is created,
 func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
-	/*if m.Author.Username == "ipec" {
-
-	}*/
-
-	log.Printf("Message created: %+v\n", *m.Message)
-
-	if m.Message.Author.Username == "ipec" {
-		log.Printf("Shrug")
+	if strings.Contains(m.Message.Content, "egal") ||
+		strings.Contains(m.Message.Content, "shrug") ||
+		strings.Contains(m.Message.Content, "¯\\_(ツ)_/¯") {
 		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "🤷‍♂️"); err != nil {
 			log.Println(err)
 		}
