@@ -1,6 +1,6 @@
 module aybot
 
-go 1.14
+go 1.19
 
 require (
 	github.com/bwmarrin/discordgo v0.25.0
