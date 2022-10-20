@@ -4,6 +4,6 @@ go 1.14
 
 require (
 	github.com/bwmarrin/discordgo v0.26.1
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.0
 	github.com/spf13/viper v1.12.0
 )
