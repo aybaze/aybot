@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/PullRequestInc/go-gpt3"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,6 +20,9 @@ import (
 const (
 	// DiscordAPIToken is the flag for the Discord API token
 	DiscordAPIToken = "discord-api-token"
+
+	// OpenAIAPIToken is the flag for the OpenAI API token
+	OpenAIAPIToken = "openai-api-token"
 )
 
 var botCmd = &cobra.Command{
@@ -55,6 +60,8 @@ var lastGameMessage = make(map[string]*discordgo.Message)
 var voiceTitlesJoining = []string{"Let's talk!", "Did you know?", "Who needs TeamSpeak?", "Someone.. talk to him!"}
 var voiceTitlesLeaving = []string{"Bye, bye!", "Uhm... gone already?"}
 
+var gptClient gpt3.Client
+
 func doCmd(cmd *cobra.Command, args []string) {
 	token := viper.GetString(DiscordAPIToken)
 
@@ -62,6 +69,15 @@ func doCmd(cmd *cobra.Command, args []string) {
 		log.Println("No Discord API token provided.")
 		return
 	}
+
+	apiKey := viper.GetString(OpenAIAPIToken)
+
+	if token == "" {
+		log.Println("No OpenAI API token provided.")
+		return
+	}
+
+	gptClient = gpt3.NewClient(apiKey)
 
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
@@ -126,6 +142,20 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "🤷‍♂️"); err != nil {
 			log.Println(err)
 		}
+	}
+
+	var err error
+	var resp *gpt3.CompletionResponse
+	resp, err = gptClient.Completion(context.Background(), gpt3.CompletionRequest{
+		Prompt:      []string{content},
+		MaxTokens:   gpt3.IntPtr(500),
+		Temperature: gpt3.Float32Ptr(0.4),
+		N:           gpt3.IntPtr(1),
+	})
+	if err != nil {
+		log.Println(err)
+	} else {
+		s.ChannelMessageSend(homeChannels[m.GuildID], resp.Choices[0].Text)
 	}
 }
 
