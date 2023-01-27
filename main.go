@@ -144,18 +144,22 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	var err error
-	var resp *gpt3.CompletionResponse
-	resp, err = gptClient.Completion(context.Background(), gpt3.CompletionRequest{
-		Prompt:      []string{content},
-		MaxTokens:   gpt3.IntPtr(500),
-		Temperature: gpt3.Float32Ptr(0.4),
-		N:           gpt3.IntPtr(1),
-	})
-	if err != nil {
-		log.Println(err)
-	} else {
-		s.ChannelMessageSend(homeChannels[m.GuildID], resp.Choices[0].Text)
+	for _, user := range m.Mentions {
+		if user.Username == "aybot" {
+			var err error
+			var resp *gpt3.CompletionResponse
+			resp, err = gptClient.Completion(context.Background(), gpt3.CompletionRequest{
+				Prompt:      []string{content},
+				MaxTokens:   gpt3.IntPtr(500),
+				Temperature: gpt3.Float32Ptr(0.4),
+				N:           gpt3.IntPtr(1),
+			})
+			if err != nil {
+				log.Println(err)
+			} else {
+				s.ChannelMessageSend(homeChannels[m.GuildID], resp.Choices[0].Text)
+			}
+		}
 	}
 }
 
