@@ -78,6 +78,16 @@ func doCmd(cmd *cobra.Command, args []string) {
 	}
 
 	gptClient = gpt3.NewClient(apiKey)
+	res, err := gptClient.Completion(context.Background(), gpt3.CompletionRequest{
+		Prompt:      []string{"Is it working?"},
+		Temperature: gpt3.Float32Ptr(0.4),
+		N:           gpt3.IntPtr(1),
+	})
+	if err != nil {
+		log.Println("OpenAI integration is not working")
+	} else {
+		log.Print(res.Choices[0].Text)
+	}
 
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
