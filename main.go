@@ -84,7 +84,7 @@ func doCmd(cmd *cobra.Command, args []string) {
 		N:           gpt3.IntPtr(1),
 	})
 	if err != nil {
-		log.Println("OpenAI integration is not working")
+		log.Printf("OpenAI integration is not working: %s", err)
 	} else {
 		log.Print(res.Choices[0].Text)
 	}
