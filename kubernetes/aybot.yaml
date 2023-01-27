@@ -21,6 +21,11 @@ spec:
                 secretKeyRef:
                   name: aybot-secret
                   key: discord-api-token
+            - name: OPENAI_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: aybot-secret
+                  key: openai-api-token
           image: ghcr.io/aybaze/aybot:$TAG
           imagePullPolicy: Always
           name: aybot
