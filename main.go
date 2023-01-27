@@ -160,11 +160,14 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	for _, user := range m.Mentions {
 		if user.Username == "aybot" {
+			content = strings.ReplaceAll(m.Message.ContentWithMentionsReplaced(), "@aybaze", "")
+
 			var err error
 			var resp *gpt3.CompletionResponse
 			resp, err = gptClient.Completion(context.Background(), gpt3.CompletionRequest{
 				Prompt:      []string{content},
-				MaxTokens:   gpt3.IntPtr(500),
+				MaxTokens:   gpt3.IntPtr(128),
+				Stop:        []string{"."},
 				Temperature: gpt3.Float32Ptr(0.4),
 				N:           gpt3.IntPtr(1),
 			})
