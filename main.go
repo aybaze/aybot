@@ -160,7 +160,7 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	for _, user := range m.Mentions {
 		if user.Username == "aybot" {
-			content = strings.ReplaceAll(m.Message.ContentWithMentionsReplaced(), "@aybaze", "")
+			content = strings.ReplaceAll(m.Message.ContentWithMentionsReplaced(), "@aybot", "")
 
 			var err error
 			var resp *gpt3.CompletionResponse
