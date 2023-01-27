@@ -72,7 +72,7 @@ func doCmd(cmd *cobra.Command, args []string) {
 
 	apiKey := viper.GetString(OpenAIAPIToken)
 
-	if token == "" {
+	if apiKey == "" {
 		log.Println("No OpenAI API token provided.")
 		return
 	}
@@ -144,6 +144,10 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
+	if m.Author.Username == "aybot" {
+		return
+	}
+
 	for _, user := range m.Mentions {
 		if user.Username == "aybot" {
 			var err error
@@ -157,7 +161,7 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err != nil {
 				log.Println(err)
 			} else {
-				s.ChannelMessageSend(homeChannels[m.GuildID], resp.Choices[0].Text)
+				s.ChannelMessageSend(m.ChannelID, resp.Choices[0].Text)
 			}
 		}
 	}
