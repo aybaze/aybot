@@ -160,7 +160,7 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 		strings.Contains(content, "shrug") ||
 		strings.Contains(content, "🤷‍♂️") ||
 		strings.Contains(content, "¯\\_(ツ)_/¯") {
-		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "❌"); err != nil {
+		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "🤷‍♂️"); err != nil {
 			log.Println(err)
 		}
 	}
@@ -206,7 +206,7 @@ func queryOpenAI(s *discordgo.Session, m *discordgo.Message) {
 	})
 	if err != nil {
 		log.Printf("Could not execute OpenAI request: %v\n", err)
-		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "🤷‍♂️"); err != nil {
+		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "❌"); err != nil {
 			log.Println(err)
 		}
 	} else {
