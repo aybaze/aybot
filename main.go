@@ -11,8 +11,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/PullRequestInc/go-gpt3"
 	"github.com/bwmarrin/discordgo"
+	gogpt "github.com/sashabaranov/go-gpt3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -60,7 +60,7 @@ var lastGameMessage = make(map[string]*discordgo.Message)
 var voiceTitlesJoining = []string{"Let's talk!", "Did you know?", "Who needs TeamSpeak?", "Someone.. talk to him!"}
 var voiceTitlesLeaving = []string{"Bye, bye!", "Uhm... gone already?"}
 
-var gptClient gpt3.Client
+var gptClient *gogpt.Client
 
 func doCmd(cmd *cobra.Command, args []string) {
 	token := viper.GetString(DiscordAPIToken)
@@ -77,11 +77,16 @@ func doCmd(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	gptClient = gpt3.NewClient(apiKey)
-	res, err := gptClient.Completion(context.Background(), gpt3.CompletionRequest{
-		Prompt:      []string{"Is it working?"},
-		Temperature: gpt3.Float32Ptr(0.4),
-		N:           gpt3.IntPtr(1),
+	gptClient = gogpt.NewClient(apiKey)
+	res, err := gptClient.CreateCompletion(context.Background(), gogpt.CompletionRequest{
+		Model:            gogpt.GPT3TextDavinci003,
+		MaxTokens:        256,
+		Temperature:      0.7,
+		Prompt:           "Löst die AI bald den Fließenleger ab?",
+		TopP:             1.0,
+		FrequencyPenalty: 0.0,
+		PresencePenalty:  0.0,
+		BestOf:           1,
 	})
 	if err != nil {
 		log.Printf("OpenAI integration is not working: %s", err)
@@ -163,18 +168,21 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 			content = strings.ReplaceAll(m.Message.ContentWithMentionsReplaced(), "@aybot", "")
 
 			var err error
-			var resp *gpt3.CompletionResponse
-			resp, err = gptClient.Completion(context.Background(), gpt3.CompletionRequest{
-				Prompt:      []string{content},
-				MaxTokens:   gpt3.IntPtr(128),
-				Stop:        []string{"."},
-				Temperature: gpt3.Float32Ptr(0.4),
-				N:           gpt3.IntPtr(1),
+			var res gogpt.CompletionResponse
+			res, err = gptClient.CreateCompletion(context.Background(), gogpt.CompletionRequest{
+				Model:            gogpt.GPT3TextDavinci003,
+				MaxTokens:        256,
+				Temperature:      0.7,
+				Prompt:           content,
+				TopP:             1.0,
+				FrequencyPenalty: 0.0,
+				PresencePenalty:  0.0,
+				BestOf:           1,
 			})
 			if err != nil {
 				log.Println(err)
 			} else {
-				s.ChannelMessageSend(m.ChannelID, resp.Choices[0].Text)
+				s.ChannelMessageSend(m.ChannelID, res.Choices[0].Text)
 			}
 		}
 	}
