@@ -44,9 +44,6 @@ func initConfig() {
 	viper.AutomaticEnv()
 }
 
-var token string
-var buffer = make([][]byte, 0)
-
 var homeChannels = make(map[string]string)
 var notificationsChannels = make(map[string]string)
 
@@ -61,6 +58,8 @@ var voiceTitlesJoining = []string{"Let's talk!", "Did you know?", "Who needs Tea
 var voiceTitlesLeaving = []string{"Bye, bye!", "Uhm... gone already?"}
 
 var gptClient *gogpt.Client
+
+var myself *discordgo.User
 
 func doCmd(cmd *cobra.Command, args []string) {
 	token := viper.GetString(DiscordAPIToken)
@@ -82,7 +81,7 @@ func doCmd(cmd *cobra.Command, args []string) {
 		Model:            gogpt.GPT3TextDavinci003,
 		MaxTokens:        256,
 		Temperature:      0.7,
-		Prompt:           "Löst die AI bald den Fließenleger ab?",
+		Prompt:           "Are you ready to play?",
 		TopP:             1.0,
 		FrequencyPenalty: 0.0,
 		PresencePenalty:  0.0,
@@ -97,6 +96,13 @@ func doCmd(cmd *cobra.Command, args []string) {
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
 		log.Println("Error creating Discord session: ", err)
+		return
+	}
+
+	// Fetch some information about myself
+	myself, err = session.User("@me")
+	if err != nil {
+		log.Printf("Could not find out about myself: %v", err)
 		return
 	}
 
@@ -154,37 +160,58 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 		strings.Contains(content, "shrug") ||
 		strings.Contains(content, "🤷‍♂️") ||
 		strings.Contains(content, "¯\\_(ツ)_/¯") {
-		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "🤷‍♂️"); err != nil {
+		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "❌"); err != nil {
 			log.Println(err)
 		}
 	}
 
-	if m.Author.Username == "aybot" {
+	// Make sure, we don't invoke it based on our own messages
+	if m.Author.ID == myself.ID {
 		return
 	}
 
+	var invokeOpenAI = false
 	for _, user := range m.Mentions {
-		if user.Username == "aybot" {
-			content = strings.ReplaceAll(m.Message.ContentWithMentionsReplaced(), "@aybot", "")
-
-			var err error
-			var res gogpt.CompletionResponse
-			res, err = gptClient.CreateCompletion(context.Background(), gogpt.CompletionRequest{
-				Model:            gogpt.GPT3TextDavinci003,
-				MaxTokens:        256,
-				Temperature:      0.7,
-				Prompt:           content,
-				TopP:             1.0,
-				FrequencyPenalty: 0.0,
-				PresencePenalty:  0.0,
-				BestOf:           1,
-			})
-			if err != nil {
-				log.Println(err)
-			} else {
-				s.ChannelMessageSend(m.ChannelID, res.Choices[0].Text)
-			}
+		if user.ID == myself.ID {
+			invokeOpenAI = true
 		}
+	}
+
+	if strings.Contains(content, myself.Username) {
+		invokeOpenAI = true
+	}
+
+	if invokeOpenAI {
+		queryOpenAI(s, m.Message)
+	}
+}
+
+func queryOpenAI(s *discordgo.Session, m *discordgo.Message) {
+	content := strings.ReplaceAll(m.ContentWithMentionsReplaced(), fmt.Sprintf("@%s", myself.Username), "")
+	content = strings.ReplaceAll(content, myself.Username, "")
+
+	log.Printf("Querying OpenAI...")
+
+	var err error
+	var res gogpt.CompletionResponse
+	res, err = gptClient.CreateCompletion(context.Background(), gogpt.CompletionRequest{
+		Model:            gogpt.GPT3TextDavinci003,
+		MaxTokens:        256,
+		Temperature:      0.7,
+		Prompt:           content,
+		TopP:             1.0,
+		FrequencyPenalty: 0.0,
+		PresencePenalty:  0.0,
+		BestOf:           1,
+	})
+	if err != nil {
+		log.Printf("Could not execute OpenAI request: %v\n", err)
+		if err := s.MessageReactionAdd(m.ChannelID, m.ID, "🤷‍♂️"); err != nil {
+			log.Println(err)
+		}
+	} else {
+		s.ChannelMessageSend(m.ChannelID, res.Choices[0].Text)
+		log.Printf("OpenAI Usage: %d total tokens\n", res.Usage.TotalTokens)
 	}
 }
 
