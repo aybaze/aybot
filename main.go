@@ -271,6 +271,18 @@ func renderVoiceStateText(user *discordgo.User, leaving bool, voiceState *discor
 		return nil, errors.New("please specifiy a valid user and voice state")
 	}
 
+	// Switch discord's unique username to custom Hampel gamertags
+	switch user.Username {
+    		case ".ipec":
+        		user.Username = "Ipec"
+    		case "matze8205":
+			user.Username = "Bifteki"
+		case "didi1701:
+			user.Username = "Didi"
+		case "oxisto":
+			user.Username = "Oxisto"
+	}
+
 	var s = fmt.Sprintf("**%s** ", user.Username)
 
 	if leaving {
