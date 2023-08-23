@@ -277,7 +277,7 @@ func renderVoiceStateText(user *discordgo.User, leaving bool, voiceState *discor
         		user.Username = "Ipec"
     		case "matze8205":
 			user.Username = "Bifteki"
-		case "didi1701:
+		case "didi1701":
 			user.Username = "Didi"
 		case "oxisto":
 			user.Username = "Oxisto"
