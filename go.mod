@@ -2,7 +2,7 @@ module aybot
 
 go 1.21.1
 
-toolchain go1.24.1
+toolchain go1.24.2
 
 require (
 	github.com/bwmarrin/discordgo v0.28.1
