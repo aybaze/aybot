@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/bwmarrin/discordgo v0.28.1
-	github.com/sashabaranov/go-gpt3 v1.3.3
+	github.com/sashabaranov/go-gpt3 v1.40.2
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 )
